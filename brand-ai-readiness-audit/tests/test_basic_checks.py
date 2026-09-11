@@ -253,5 +253,178 @@ class TestHtmlAnalysis(unittest.TestCase):
         self.assertEqual(analysis['images_without_alt'], 2)
 
 
+class TestRobotsAnalyzer(unittest.TestCase):
+    """Test robots.txt directives and AI bot matrix parsing."""
+
+    def test_blocked_ai_search_bots_detected(self):
+        """Specific AI search bot disallow is detected as critical."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from robots import analyze_robots_directives
+        
+        mock_robots = {
+            'available': True,
+            'url': 'https://example.com/robots.txt',
+            'sitemap_url': 'https://example.com/sitemap.xml',
+            'bot_rules': {
+                'GPTBot': {'disallows': ['/'], 'allows': []},
+                'PerplexityBot': {'disallows': ['/'], 'allows': []}
+            }
+        }
+        findings = analyze_robots_directives(mock_robots, 'https://example.com')
+        crit_findings = [f for f in findings if f.get('severity') == 'critical']
+        self.assertTrue(len(crit_findings) >= 1)
+        self.assertIn('GPTBot', crit_findings[0]['evidence'])
+        self.assertIn('PerplexityBot', crit_findings[0]['evidence'])
+
+    def test_wildcard_block_with_allow_override(self):
+        """Wildcard Disallow / is overridden by specific bot Allow /."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from robots import analyze_robots_directives
+        
+        mock_robots = {
+            'available': True,
+            'url': 'https://example.com/robots.txt',
+            'sitemap_url': 'https://example.com/sitemap.xml',
+            'bot_rules': {
+                '*': {'disallows': ['/'], 'allows': []},
+                'GPTBot': {'disallows': [], 'allows': ['/']},
+                'PerplexityBot': {'disallows': [], 'allows': ['/']},
+                'ClaudeBot': {'disallows': [], 'allows': ['/']},
+                'ChatGPT-User': {'disallows': [], 'allows': ['/']},
+                'Claude-Web': {'disallows': [], 'allows': ['/']},
+                'Applebot-Extended': {'disallows': [], 'allows': ['/']},
+                'YouBot': {'disallows': [], 'allows': ['/']},
+                'Bingbot': {'disallows': [], 'allows': ['/']}
+            }
+        }
+        findings = analyze_robots_directives(mock_robots, 'https://example.com')
+        # All search bots explicitly allowed, should not trigger DISC-ROB-002
+        self.assertFalse(any(f['id'] == 'DISC-ROB-002' for f in findings))
+
+    def test_case_insensitive_agent_matching(self):
+        """User-agent matching must be case insensitive (e.g. gptbot)."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from robots import analyze_robots_directives
+        
+        mock_robots = {
+            'available': True,
+            'url': 'https://example.com/robots.txt',
+            'sitemap_url': 'https://example.com/sitemap.xml',
+            'bot_rules': {
+                'gptbot': {'disallows': ['/'], 'allows': []}
+            }
+        }
+        findings = analyze_robots_directives(mock_robots, 'https://example.com')
+        crit_findings = [f for f in findings if f.get('severity') == 'critical']
+        self.assertTrue(len(crit_findings) >= 1)
+        self.assertIn('GPTBot', crit_findings[0]['evidence'])
+
+    def test_missing_sitemap_finding(self):
+        """Missing sitemap in robots.txt should trigger low severity finding."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from robots import analyze_robots_directives
+        
+        mock_robots = {
+            'available': True,
+            'url': 'https://example.com/robots.txt',
+            'sitemap_url': None,
+            'bot_rules': {}
+        }
+        findings = analyze_robots_directives(mock_robots, 'https://example.com')
+        self.assertTrue(any(f['id'] == 'DISC-ROB-003' for f in findings))
+
+
+class TestWafAndEdgeDetection(unittest.TestCase):
+    """Test Edge WAF fingerprinting and anti-bot challenge detection."""
+
+    def test_cloudflare_waf_detected(self):
+        """Cloudflare server header or challenge triggers WAF detection."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from crawler import detect_waf_challenge
+        
+        headers = {'Server': 'cloudflare', 'cf-ray': '8c123456789-ORD'}
+        res = detect_waf_challenge(403, headers, "Just a moment... Attention Required! Cloudflare")
+        self.assertIsNotNone(res)
+        self.assertTrue(res['detected'])
+        self.assertEqual(res['provider'], 'Cloudflare')
+
+    def test_akamai_waf_detected(self):
+        """Akamai edge transformation header is detected."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from crawler import detect_waf_challenge
+        
+        headers = {'Server': 'AkamaiGHost', 'x-akamai-transformed': '9 - 0 p_s'}
+        res = detect_waf_challenge(403, headers, "Access Denied")
+        self.assertIsNotNone(res)
+        self.assertEqual(res['provider'], 'Akamai')
+
+    def test_aws_waf_detected(self):
+        """AWS CloudFront WAF header is detected."""
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from crawler import detect_waf_challenge
+        
+        headers = {'Server': 'CloudFront', 'x-amz-cf-id': 'xyz987'}
+        res = detect_waf_challenge(403, headers, "403 Forbidden")
+        self.assertIsNotNone(res)
+        self.assertEqual(res['provider'], 'AWS CloudFront WAF')
+
+
+class TestCSRAndAccessibilityFindings(unittest.TestCase):
+    """Test Client-Side Rendering locks and heading hierarchy findings."""
+
+    def test_csr_locked_empty_root_with_scripts(self):
+        """Empty SPA root with multiple scripts and low words is flagged as CSR locked."""
+        from bs4 import BeautifulSoup
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from page_analysis import analyze_html_structure, detect_accessibility_issues
+        
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head><title>SPA App</title><meta name="description" content="A NextJS SPA"></head>
+        <body>
+            <div id="root"></div>
+            <script src="/static/js/main.chunk.js"></script>
+            <script src="/static/js/bundle.js"></script>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, 'html.parser')
+        analysis = analyze_html_structure(soup, "https://example.com/app")
+        self.assertTrue(analysis['is_csr_locked'])
+        
+        findings = detect_accessibility_issues(analysis, "https://example.com/app")
+        self.assertTrue(any(f['id'] == 'DISC-RND-001' for f in findings))
+
+    def test_heading_hierarchy_findings(self):
+        """Test missing H1 and multiple H1 detections."""
+        from bs4 import BeautifulSoup
+        # pyrefly: ignore [missing-import]
+        # type: ignore
+        from page_analysis import analyze_html_structure, detect_accessibility_issues
+        
+        # 0 H1
+        html_no_h1 = "<html><head><title>T</title><meta name='description' content='D'></head><body><h2>H2</h2></body></html>"
+        soup = BeautifulSoup(html_no_h1, 'html.parser')
+        analysis = analyze_html_structure(soup, "https://example.com")
+        findings = detect_accessibility_issues(analysis, "https://example.com")
+        self.assertTrue(any(f['id'] == 'DISC-STR-001' for f in findings))
+        
+        # Multiple H1s
+        html_multi_h1 = "<html><head><title>T</title><meta name='description' content='D'></head><body><h1>H1 A</h1><h1>H1 B</h1></body></html>"
+        soup = BeautifulSoup(html_multi_h1, 'html.parser')
+        analysis = analyze_html_structure(soup, "https://example.com")
+        findings = detect_accessibility_issues(analysis, "https://example.com")
+        self.assertTrue(any(f['id'] == 'DISC-STR-002' for f in findings))
+
+
 if __name__ == '__main__':
     unittest.main()

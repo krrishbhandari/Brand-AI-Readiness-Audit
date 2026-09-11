@@ -1,3 +1,4 @@
+
 # Master Plan: Brand AI-Readiness Audit Marketplace (Adobe Round 3)
 
 **Competition**: Adobe University Hackathon 2026 — Round 3 (Development Round)  

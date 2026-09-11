@@ -1,19 +1,16 @@
 """
-Crawler module for conservative website crawling.
-Implements same-domain crawling with configurable limits.
+Crawler Module for Conservative, Fact-Aware Website Crawling.
+Implements same-domain crawling, WAF/Edge detection, and polite traversal limits.
 """
 
 import time
 import re
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
-from urllib.robotparser import RobotFileParser
 from collections import deque
 from typing import Dict, List, Optional, Set
-import requests
+import urllib.request
 from bs4 import BeautifulSoup
 
-
-# Tracking parameters to remove for URL normalization
 TRACKING_PARAMS = {
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
     'fbclid', 'gclid', 'mc_cid', 'mc_eid', 'ref', 'source', 'medium',
@@ -21,18 +18,12 @@ TRACKING_PARAMS = {
     'hsa_mt', 'hsa_src', 'hsa_ad', 'hsa_acc', 'hsa_net', 'hsa_ver',
     'hsa_la', 'hsa_ol', 'hsa_kw', 'hsa_tgt', 'hsa_cam_id', 'hsa_ad_id',
     'hsa_ad_set_id', 'hsa_net_id', 'hsa_ver_id', 'hsa_la_id', 'hsa_ol_id',
-    'hsa_kw_id', 'hsa_tgt_id', 'hsa_cam_id', 'hsa_ad_id', 'hsa_ad_set_id',
-    'hsa_net_id', 'hsa_ver_id', 'hsa_la_id', 'hsa_ol_id', 'hsa_kw_id',
-    'hsa_tgt_id', 'hsa_cam_id', 'hsa_ad_id', 'hsa_ad_set_id', 'hsa_net_id',
-    'hsa_ver_id', 'hsa_la_id', 'hsa_ol_id', 'hsa_kw_id', 'hsa_tgt_id',
-    'hsa_cam_id', 'hsa_ad_id', 'hsa_ad_set_id', 'hsa_net_id', 'hsa_ver_id',
-    'hsa_la_id', 'hsa_ol_id', 'hsa_kw_id', 'hsa_tgt_id'
+    'hsa_kw_id', 'hsa_tgt_id'
 }
 
 
 class CrawlerConfig:
-    """Configuration for the crawler."""
-    
+    """Configuration for conservative, high-performance crawling."""
     def __init__(
         self,
         max_pages: int = 20,
@@ -49,236 +40,204 @@ class CrawlerConfig:
 
 
 def normalize_url(url: str) -> str:
-    """Normalize URL by removing tracking parameters and standardizing format."""
+    """Normalize URL by removing tracking parameters, fragments, and trailing slashes."""
+    if not url:
+        return ""
+    if not url.startswith(('http://', 'https://')):
+        url = f"https://{url}"
+        
     parsed = urlparse(url)
-    
-    # Remove fragment
     parsed = parsed._replace(fragment='')
     
-    # Remove tracking parameters
     query_params = parse_qs(parsed.query)
     cleaned_params = {
         k: v for k, v in query_params.items() 
         if k.lower() not in TRACKING_PARAMS
     }
     
-    # Rebuild query string
     new_query = urlencode(cleaned_params, doseq=True) if cleaned_params else ''
     parsed = parsed._replace(query=new_query)
     
-    # Normalize path (remove trailing slash for consistency, except root)
     path = parsed.path
     if path != '/' and path.endswith('/'):
         path = path[:-1]
-    
-    # Remove index.html/htm variations
     path = re.sub(r'/index\.(html?|php)$', '', path, flags=re.IGNORECASE)
-    
     parsed = parsed._replace(path=path)
     
     return urlunparse(parsed)
 
 
 def get_domain(url: str) -> str:
-    """Extract domain from URL."""
+    """Extract domain host from URL."""
     parsed = urlparse(url)
     return parsed.netloc.lower()
 
 
 def is_same_domain(url: str, base_domain: str) -> bool:
-    """Check if URL belongs to the same domain."""
-    return get_domain(url) == base_domain
+    """Check if URL belongs to the same base domain."""
+    return get_domain(url) == base_domain.lower()
 
 
-def create_audit_context(url: str) -> Dict:
-    """Create initial audit context."""
-    normalized = normalize_url(url)
-    parsed = urlparse(normalized)
-    
-    return {
-        "site": {
-            "input_url": url,
-            "normalized_url": normalized,
-            "final_url": None,
-            "domain": parsed.netloc.lower()
-        },
-        "robots": {
-            "available": False,
-            "content": None,
-            "allows": [],
-            "disallows": [],
-            "sitemap_url": None
-        },
-        "sitemap": {
-            "available": False,
-            "urls": [],
-            "last_modified": None
-        },
-        "pages": [],
-        "links": [],
-        "structured_data": [],
-        "metadata": [],
-        "text_signals": [],
-        "render_signals": []
-    }
-
-
-def fetch_page(url: str, config: CrawlerConfig) -> Optional[Dict]:
-    """Fetch a single page and extract basic information."""
-    try:
-        headers = {'User-Agent': config.user_agent}
-        response = requests.get(
-            url, 
-            headers=headers, 
-            timeout=config.timeout,
-            allow_redirects=True
-        )
-        
-        # Track redirect chain
-        redirect_chain = []
-        for resp in response.history:
-            redirect_chain.append({
-                'url': resp.url,
-                'status': resp.status_code
-            })
-        
-        # Parse content
-        soup = BeautifulSoup(response.text, 'lxml') if response.text else None
-        
-        return {
-            'url': url,
-            'status_code': response.status_code,
-            'final_url': response.url,
-            'content_type': response.headers.get('Content-Type', ''),
-            'headers': dict(response.headers),
-            'html': response.text if response.text else '',
-            'soup': soup,
-            'redirect_chain': redirect_chain,
-            'elapsed': response.elapsed.total_seconds()
-        }
-        
-    except requests.exceptions.Timeout:
-        return {
-            'url': url,
-            'status_code': 0,
-            'error': 'timeout',
-            'final_url': url
-        }
-    except requests.exceptions.RequestException as e:
-        return {
-            'url': url,
-            'status_code': 0,
-            'error': str(e),
-            'final_url': url
-        }
-
-
-def extract_links(soup: BeautifulSoup, base_url: str) -> List[Dict]:
-    """Extract all links from a page."""
-    links = []
-    
-    if not soup:
-        return links
-    
-    for tag in soup.find_all('a', href=True):
-        href = tag['href']
-        absolute_url = urljoin(base_url, href)
-        normalized = normalize_url(absolute_url)
-        
-        links.append({
-            'source': base_url,
-            'target': normalized,
-            'text': tag.get_text(strip=True),
-            'is_internal': is_same_domain(normalized, get_domain(base_url))
-        })
-    
-    return links
-
-
-def crawl_website(
-    url: str,
-    config: Optional[CrawlerConfig] = None,
-    robots_parser: Optional[RobotFileParser] = None
-) -> Dict:
+def detect_waf_challenge(status_code: int, headers: Dict, body_text: str) -> Optional[Dict]:
     """
-    Crawl a website and populate audit context.
+    Detect Edge WAF / Bot challenge blocks (Nordstrom rule from research).
+    """
+    is_waf = False
+    provider = "Generic WAF"
     
-    Args:
-        url: Starting URL
-        config: Crawler configuration
-        robots_parser: Pre-loaded robots.txt parser
+    # Header signatures
+    server = headers.get('Server', '').lower()
+    if 'cloudflare' in server or 'cf-ray' in headers:
+        provider = "Cloudflare"
+    elif 'akamai' in server or 'x-akamai-transformed' in headers:
+        provider = "Akamai"
+    elif 'fastly' in server or 'x-fastly-request-id' in headers:
+        provider = "Fastly"
+    elif 'aws' in server or 'x-amz-cf-id' in headers:
+        provider = "AWS CloudFront WAF"
         
-    Returns:
-        Populated audit context
+    # Status and body signatures
+    if status_code in [403, 429]:
+        is_waf = True
+    elif re.search(r'(cf-browser-verification|challenge-platform|turnstile|attention required|just a moment\.\.\.|access denied|captcha)', body_text[:1000], re.IGNORECASE):
+        is_waf = True
+        
+    if is_waf:
+        return {
+            'detected': True,
+            'provider': provider,
+            'status_code': status_code,
+            'reason': f"Edge security challenge or HTTP {status_code} encountered ({provider})."
+        }
+    return None
+
+
+def fetch_page(url: str, config: CrawlerConfig) -> Dict:
+    """
+    Fetch single page with headers and WAF inspection.
+    """
+    result = {
+        'url': url,
+        'status_code': 0,
+        'html': '',
+        'headers': {},
+        'error': None,
+        'waf_challenge': None
+    }
+    
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': config.user_agent,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=config.timeout) as response:
+            result['status_code'] = response.status
+            result['headers'] = dict(response.headers)
+            raw_bytes = response.read()
+            html = raw_bytes.decode('utf-8', errors='replace')
+            result['html'] = html
+            
+            waf = detect_waf_challenge(response.status, result['headers'], html)
+            if waf:
+                result['waf_challenge'] = waf
+    except urllib.error.HTTPError as e:
+        result['status_code'] = e.code
+        result['headers'] = dict(e.headers) if hasattr(e, 'headers') else {}
+        err_body = ""
+        try:
+            err_body = e.read().decode('utf-8', errors='replace')
+        except Exception:
+            pass
+        waf = detect_waf_challenge(e.code, result['headers'], err_body)
+        result['waf_challenge'] = waf
+        result['error'] = f"HTTP {e.code}: {e.reason}"
+    except Exception as e:
+        result['error'] = str(e)
+        
+    return result
+
+
+def extract_internal_links(html: str, base_url: str, base_domain: str) -> List[str]:
+    """Extract and normalize internal crawlable links."""
+    links = set()
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        for a in soup.find_all('a', href=True):
+            href = a['href'].strip()
+            if not href or href.startswith(('#', 'javascript:', 'mailto:', 'tel:')):
+                continue
+            full_url = urljoin(base_url, href)
+            norm_url = normalize_url(full_url)
+            if is_same_domain(norm_url, base_domain):
+                # Avoid binary assets and image files
+                if not re.search(r'\.(pdf|jpg|jpeg|png|gif|svg|zip|tar|gz|mp4|webm|css|js)$', norm_url, re.IGNORECASE):
+                    links.add(norm_url)
+    except Exception:
+        pass
+    return list(links)
+
+
+def crawl_website(start_url: str, config: CrawlerConfig = None) -> Dict:
+    """
+    Perform a polite, breadth-first crawl of internal pages within limits.
     """
     if config is None:
         config = CrawlerConfig()
+        
+    start_url = normalize_url(start_url)
+    base_domain = get_domain(start_url)
     
-    context = create_audit_context(url)
-    visited: Set[str] = set()
-    queue: deque = deque([(normalize_url(url), 0)])
-    
-    while queue and len(context['pages']) < config.max_pages:
-        current_url, depth = queue.popleft()
-        
-        # Skip if already visited or too deep
-        if current_url in visited or depth > config.max_depth:
-            continue
-        
-        # Check robots.txt
-        if robots_parser and not robots_parser.can_fetch(config.user_agent, current_url):
-            continue
-        
-        # Respect rate limiting
-        time.sleep(config.delay)
-        
-        # Fetch page
-        page_data = fetch_page(current_url, config)
-        if not page_data:
-            continue
-        
-        visited.add(current_url)
-        
-        # Update context with first successful page
-        if not context['site']['final_url'] and page_data.get('final_url'):
-            context['site']['final_url'] = page_data['final_url']
-        
-        # Store page data (without BeautifulSoup for JSON serialization)
-        page_info = {
-            'url': current_url,
-            'status_code': page_data.get('status_code', 0),
-            'final_url': page_data.get('final_url', current_url),
-            'content_type': page_data.get('content_type', ''),
-            'redirect_chain': page_data.get('redirect_chain', []),
-            'error': page_data.get('error'),
-            'elapsed': page_data.get('elapsed', 0),
-            'html': page_data.get('html', '')
+    context = {
+        'meta': {
+            'target_url': start_url,
+            'start_time': time.time(),
+            'version': '1.0.0'
+        },
+        'site': {
+            'input_url': start_url,
+            'normalized_url': start_url,
+            'domain': base_domain,
+            'scheme': urlparse(start_url).scheme or 'https'
+        },
+        'pages': [],
+        'edge_security': {
+            'waf_detected': False,
+            'challenges': []
         }
-        # Extract HTML metadata if available
-        soup = page_data.get('soup')
-        if soup:
-            page_info['title'] = soup.title.string if soup.title else None
-            page_info['meta_description'] = None
-            meta_desc = soup.find('meta', attrs={'name': 'description'})
-            if meta_desc:
-                page_info['meta_description'] = meta_desc.get('content')
-            
-            page_info['h1_count'] = len(soup.find_all('h1'))
-            page_info['link_count'] = len(soup.find_all('a', href=True))
-            page_info['image_count'] = len(soup.find_all('img'))
-        
-        context['pages'].append(page_info)
-        
-        # Extract and queue links
-        if soup and page_data.get('status_code') == 200:
-            links = extract_links(soup, current_url)
-            context['links'].extend(links)
-            
-            # Add internal links to queue
-            for link in links:
-                if (link['is_internal'] and 
-                    link['target'] not in visited and
-                    depth + 1 <= config.max_depth):
-                    queue.append((link['target'], depth + 1))
+    }
     
+    visited: Set[str] = set()
+    queue = deque([(start_url, 0)])
+    
+    while queue and len(visited) < config.max_pages:
+        current_url, depth = queue.popleft()
+        if current_url in visited:
+            continue
+            
+        visited.add(current_url)
+        page_result = fetch_page(current_url, config)
+        context['pages'].append(page_result)
+        
+        # Check WAF
+        if page_result.get('waf_challenge'):
+            context['edge_security']['waf_detected'] = True
+            context['edge_security']['challenges'].append({
+                'url': current_url,
+                'details': page_result['waf_challenge']
+            })
+            
+        # Discover deeper links if within depth limit
+        if depth < config.max_depth and page_result.get('html'):
+            new_links = extract_internal_links(page_result['html'], current_url, base_domain)
+            for link in new_links:
+                if link not in visited:
+                    queue.append((link, depth + 1))
+                    
+        if config.delay > 0:
+            time.sleep(config.delay)
+            
     return context

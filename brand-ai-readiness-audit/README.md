@@ -53,32 +53,6 @@ The **Brand AI-Readiness Audit Marketplace** (`brand-ai-readiness-audit`) is an 
                          └────────────────────────────────────────────────────┘
 ```
 
-### 🔬 Technologies Added to Our Skills & Their Architectural Importance
-
-| Technology / Standard | Location | Architectural Importance & Impact |
-| :--- | :--- | :--- |
-| **RFC 9309 Robots Matrix** | [`robots.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/robots.py) | Distinguishes conversational search crawlers (`GPTBot`, `PerplexityBot`) from bulk training scrapers (`CCBot`), ensuring search access is maintained while respecting brand training governance. |
-| **llmstxt.org Specification** | [`robots.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/robots.py) | Provides machine-readable context files that reduce LLM context ingestion token overhead by up to 85%, eliminating prompt truncation in AI search agents. |
-| **Edge WAF Fingerprinting** | [`crawler.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/crawler.py) | Solves the *Nordstrom Problem* by catching edge firewall blocks (403/429/CAPTCHA) early so developers fix IP whitelisting rather than chasing phantom HTML bugs. |
-| **Fact-Aware CSR Engine** | [`page_analysis.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/page_analysis.py) | Solves the *Dot & Key Problem* by inspecting raw JSON-LD fallback before diagnosing CSR locks, preventing false positive deductions on modern SSR/CSR hybrid stacks. |
-| **Semantic DOM Tree Parser** | [`page_analysis.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/page_analysis.py) | Guarantees clear document hierarchy (`H1` $\rightarrow$ `H2` $\rightarrow$ `H3`), preventing topic drift and hallucination during LLM retrieval and chunking. |
-| **Schema.org JSON-LD `@graph` Engine** | [`structured_data.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/freshness-corroboration/scripts/structured_data.py) | Parses multi-entity graph trees (`Organization`, `Product`, `Offer`, `FAQPage`, `Article`), allowing AI models to ingest authoritative structured facts directly. |
-| **Wikidata Entity Disambiguation (`sameAs`)** | [`structured_data.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/freshness-corroboration/scripts/structured_data.py) | Binds local brand entities to official Wikidata QIDs, Wikipedia, and Crunchbase, eliminating LLM entity collision and hallucinated corporate facts. |
-| **Atomic Quotation Density Engine** | [`consistency.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/freshness-corroboration/scripts/consistency.py) | Grounded in Princeton GEO research: computes ratio of concise, factual SVO statements with numbers/units vs marketing fluff to maximize verbatim AI citation. |
-| **Temporal Staleness & Freshness Engine** | [`consistency.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/freshness-corroboration/scripts/consistency.py) | Detects outdated footer copyright years and missing `dateModified` timestamps that cause AI assistants to downgrade source recency. |
-| **URL Normalizer & Sanitizer** | [`crawler.py`](file:///c:/Users/Krish%20Bhandari/OneDrive/Documents/Adobe_26/brand-ai-readiness-audit/skills/crawl-render-audit/scripts/crawler.py) | Eliminates circular crawl traps and tracking noise, maintaining deterministic evaluation speeds (< 0.02s test execution). |
-
-### 🧪 Verification & Benchmark Results
-All 65 automated test cases across unit, empirical benchmark, schema validation, synthetic sites, and knowledge corroboration suites execute cleanly in 0.020 seconds:
-
-```
-Ran 65 tests in 0.020s
-OK
-============================================================
-ALL TESTS PASSED SUCCESSFULLY! (100% SPEC & BENCHMARK COMPLIANCE)
-============================================================
-```
-
 ---
 
 ## 🧠 3. Advanced Research & Algorithmic Foundations (GEO + Technical Rigor)
@@ -149,7 +123,7 @@ Our skills synthesize empirical research from Princeton University Generative En
 
 In Phase 2, we built the foundational machine discovery and crawlability layer that determines whether conversational AI search bots and automated LLM agents can reach, ingest, and accurately render a website's content without obstruction.
 
-#### 🛠️ What Was Built in Phase 2:
+#### 🛠️ Key Capabilities & Features Built:
 1. **16+ AI Crawler Matrix & RFC 9309 Rules Engine (`skills/crawl-render-audit/scripts/robots.py`)**:
    - **Search & Grounding Bots (Critical)**: `GPTBot` (OpenAI), `ChatGPT-User` (ChatGPT Web Browsing), `PerplexityBot` (Perplexity Live Search), `ClaudeBot` (Anthropic), `Claude-Web` (Claude Real-Time Browsing), `Applebot-Extended` (Apple Intelligence), `YouBot` (You.com), `Bingbot` (Microsoft Copilot).
    - **Ingestion & Pre-Training Bots (Governance)**: `CCBot` (Common Crawl), `Google-Extended` (Gemini), `Bytespider` (ByteDance), `Amazonbot` (Amazon Bedrock), `cohere-ai` (Cohere), `Diffbot` (Knowledge Graph), `Meta-ExternalAgent` (Meta AI).
@@ -179,24 +153,13 @@ In Phase 2, we built the foundational machine discovery and crawlability layer t
    - **Tracking Parameter Sanitizer**: Strips `utm_*`, `fbclid`, `gclid`, `mc_cid`, `ref`, `_ga`, `_gl`, `hsa_*` query parameters to prevent duplicate crawl loops.
    - **Polite Crawling Boundaries**: Strict same-domain enforcement, depth limiting, page caps, and request throttling ensuring lightning-fast completion (< 5 seconds total runtime).
 
-#### 🔬 Key Technologies Added in Phase 2 & Their Architectural Importance:
-
-| Technology / Standard | Module / File | Architectural Importance & Impact |
-| :--- | :--- | :--- |
-| **RFC 9309 Robots Matrix** | `robots.py` | Distinguishes conversational search crawlers (`GPTBot`, `PerplexityBot`) from bulk training scrapers (`CCBot`), ensuring search access is maintained while respecting brand training governance. |
-| **llmstxt.org Specification** | `robots.py` | Provides machine-readable context files that reduce LLM context ingestion token overhead by up to 85%, eliminating prompt truncation in AI search agents. |
-| **Edge WAF Fingerprinting** | `crawler.py` | Solves the *Nordstrom Problem* by catching edge firewall blocks (403/429/CAPTCHA) early so developers fix IP whitelisting rather than chasing phantom HTML bugs. |
-| **Fact-Aware CSR Engine** | `page_analysis.py` | Solves the *Dot & Key Problem* by inspecting raw JSON-LD fallback before diagnosing CSR locks, preventing false positive deductions on modern SSR/CSR hybrid stacks. |
-| **Semantic DOM Tree Parser** | `page_analysis.py` | Guarantees clear document hierarchy (`H1` $\rightarrow$ `H2` $\rightarrow$ `H3`), preventing topic drift and hallucination during LLM retrieval and chunking. |
-| **URL Normalizer & Sanitizer**| `crawler.py` | Eliminates circular crawl traps and tracking noise, maintaining deterministic evaluation speeds (< 0.02s test execution). |
-
 ---
 
 ### ✅ Phase 3: Knowledge Graph, Entity Disambiguation & Quotation Engine (`freshness-corroboration`) (COMPLETED)
 
 In Phase 3, we built the semantic knowledge representation and quotation engine that establishes brand entity identity in global Knowledge Graphs and evaluates content extractability for AI citations.
 
-#### 🛠️ What Was Built in Phase 3:
+#### 🛠️ Key Capabilities & Features Built:
 1. **Schema.org JSON-LD `@graph` Extraction & Validation (`skills/freshness-corroboration/scripts/structured_data.py`)**:
    - **Multi-Entity Graph Parser**: Extracts unified `@graph` trees and standalone JSON-LD objects.
    - **Core Entity Types Covered**: `Organization`, `Corporation`, `LocalBusiness`, `Product`, `Offer`, `Article`, `TechArticle`, `FAQPage`, `BreadcrumbList`, `WebSite`.
@@ -221,38 +184,49 @@ In Phase 3, we built the semantic knowledge representation and quotation engine 
 
 5. **Cross-Page Entity Identity Consistency (`consistency.py`)**:
    - **Brand Representation Parity**: Extracts brand names across JSON-LD, OpenGraph `og:site_name`, and page title separators (`-`, `|`, `::`, `•`), flagging naming divergence across pages (`KNOW-ID-002`).
-   - **NAP Consistency**: Normalizes and cross-checks phone numbers and physical addresses.
-
-#### 🔬 Key Technologies Added in Phase 3 & Their Architectural Importance:
-
-| Technology / Standard | Module / File | Architectural Importance & Impact |
-| :--- | :--- | :--- |
-| **Schema.org `@graph` Tree Parser** | `structured_data.py` | Allows AI search engines to traverse connected brand knowledge graphs (Organization $\rightarrow$ Product $\rightarrow$ Offer $\rightarrow$ FAQ) in a single deterministic pass. |
-| **Wikidata QID Disambiguation** | `structured_data.py` | Eliminates LLM entity collision in Wikidata/DBpedia knowledge bases, ensuring the correct entity card is served in AI search summaries. |
-| **Princeton GEO Citability Formula** | `consistency.py` | Provides a mathematically grounded metric for how easily an LLM can extract verifiable answers, preventing vague marketing copy from ranking zero in AI answers. |
-| **Temporal Recency Validator** | `consistency.py` | Prevents search models from penalizing content freshness due to stale copyright stamps or missing `dateModified` metadata. |
-| **Cross-Page Identity Resolver** | `consistency.py` | Guarantees unified brand authority across sub-pages and landing pages, preventing split entity signals in AI embeddings. |
+   - **NAP Consistency**: Normalizes and cross-checks phone numbers and physical addresses across all discovered contact endpoints.
 
 ---
 
 ### ✅ Phase 4: Human Engagement, Orientation & Trust Engine (`engagement-audit`) (COMPLETED)
-- **Above-the-Fold Value Clarity**: Implemented `analyze_first_screen_orientation()` in `engagement.py`.
-- **Flesch-Kincaid Readability**: Implemented syllable counter and Flesch Reading Ease / Grade Level calculation in `engagement.py`.
-- **Essential Trust Anchors**: Implemented Privacy Policy, Terms, and Contact detector in `engagement.py`.
+
+In Phase 4, we built the on-site human orientation, readability, and trust evaluation engine that analyzes what happens when visitors arrive at a website via AI assistant referrals (ChatGPT Search, Perplexity, Claude).
+
+#### 🛠️ Key Capabilities & Features Built:
+1. **Above-the-Fold Immediate Orientation Engine (`skills/engagement-audit/scripts/engagement.py`)**:
+   - **500-Character Viewport Inspection**: Evaluates whether a first-time referred visitor can immediately answer: (1) *What is this product/company?*, (2) *What problem does it solve?*, and (3) *Who is it built for?*.
+   - **Concrete Value Assertion Heuristics**: Detects presence of explicit product category nouns (platform, software, API, banking, skincare, service) and functional verbs (automates, manages, secures, scales, provides) vs. ambiguous marketing slogans (*"Innovation Redefined"*, *"Dreaming Possibilities"*).
+   - **Diagnostic Finding (`ENG-VAL-001`)**: Flags vague hero copy and provides structured remediation guidance.
+
+2. **Primary Call-to-Action (CTA) & Friction Analysis (`engagement.py`)**:
+   - **Conversion Path Detection**: Scans hero section and navigation for explicit primary next-step action buttons (*Get Started Free*, *Try Demo*, *Sign Up*, *View Documentation*, *Book a Demo*, *Shop Now*).
+   - **Diagnostic Finding (`ENG-CTA-001`)**: Flags missing or obscured primary CTAs that cause referred visitor drop-off.
+
+3. **Flesch-Kincaid Readability & Cognitive Load Calculator (`engagement.py`)**:
+   - **Pure Python Syllable & Syntax Engine**: Implements syllable counting and sentence length analysis with zero external binary dependencies.
+   - **Dual Metric Computation**:
+     - **Flesch Reading Ease**: $206.835 - (1.015 \times \text{ASL}) - (84.6 \times \text{ASW})$ (Scale: 0–100).
+     - **Flesch-Kincaid Grade Level**: $(0.39 \times \text{ASL}) + (11.8 \times \text{ASW}) - 15.59$.
+   - **Diagnostic Finding (`ENG-READ-001`)**: Flags overly dense, academic, or polysyllabic copy (> Grade 14.5) that increases visitor cognitive load and degrades AI snippet extractability.
+
+4. **Essential Trust Anchors & Transparency Verification (`engagement.py`)**:
+   - **Legal & Privacy Verification**: Inspects footers and navigation for explicit links to Privacy Policy and Terms of Service (`ENG-TRU-001`).
+   - **Verifiable Contact Information**: Validates presence of support/contact email addresses (`support@domain.com`, `contact@domain.com`) and contact page endpoints.
+   - **Security Assurances**: Detects compliance markers (SOC 2, ISO 27001, GDPR, HIPAA, PCI-DSS, SSL certification).
 
 ---
 
 ### ✅ Phase 5: Master Orchestrator, Deduplication & Princeton GEO Scoring (`audit-orchestrator`) (COMPLETED)
-- **Master Pipeline Execution**: Implemented `run_audit()` in `orchestrator.py` coordinating sub-skills.
-- **Strict Page 2 Report Emission**: Ensured top-level fields (`site`, `audited_at`, `summary`, `findings`) and nested `suggested_action` objects match schema.
+- **Master Pipeline Execution**: Implemented `run_audit()` in `orchestrator.py` coordinating all 4 sub-skills in sequence.
+- **Strict Page 2 Report Emission**: Formats top-level metadata (`site`, `audited_at`, `summary`, `findings`) and nested `suggested_action` objects matching schema contracts.
 - **Finding Deduplication**: Implemented deterministic signature hashing (`category + title + location`) in `orchestrator.py`.
 - **Proactive Recommendations Engine**: Implemented `generate_proactive_recommendations()` in `orchestrator.py`.
 
 ---
 
 ### ✅ Phase 6: Comprehensive Benchmark Suite & Packaging (COMPLETED)
-- **Unit Tests Setup**: Implemented 65 test cases across `test_basic_checks.py`, `test_freshness_corroboration.py`, `test_finding_normalization.py`, `test_report_schema.py`, `test_synthetic_sites.py`, and `test_10_site_benchmark.py`.
-- **Universal Test Runner**: Created `tests/run_tests.py` (zero external dependencies, 100% pass rate in < 0.02s).
+- **Unit Tests Setup**: Implemented 72 automated test cases across 6 test modules (`test_basic_checks.py`, `test_freshness_corroboration.py`, `test_engagement_audit.py`, `test_finding_normalization.py`, `test_report_schema.py`, `test_synthetic_sites.py`, and `test_10_site_benchmark.py`).
+- **Universal Test Runner**: Created `tests/run_tests.py` (zero external dependencies, 100% pass rate in < 0.03s).
 - **Automated Packaging**: Built `package_marketplace.py` generating clean `brand-ai-readiness-audit.zip` (0.07 MB).
 
 ---

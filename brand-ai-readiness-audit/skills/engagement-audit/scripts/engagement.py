@@ -79,8 +79,8 @@ def analyze_first_screen_orientation(soup: BeautifulSoup, url: str) -> Dict:
         
         # Check for concrete value positioning patterns
         val_patterns = [
-            r'\b(platform|software|api|tool|service|solution|analytics|automation|intelligence|security|infrastructure|agent|bank|account|skincare|serum|course|learning|product)\b',
-            r'\b(built for|designed to|helps|enables|automates|manages|secures|scales|provides|offers|features|rates|effective|brightening)\b'
+            r'\b(platform|software|api|tool|service|solution|analytics|automation|workflows?|apps?|intelligence|security|infrastructure|agent|bank|account|skincare|serum|course|learning|product)\b',
+            r'\b(built for|designed to|helps?|enables?|automates?|manages?|secures?|scales?|provides?|offers?|features?|rates?|empowers?|processes?|connects?|simplifies?|effective|brightening)\b'
         ]
         if all(re.search(pat, visible_text[:600], re.IGNORECASE) for pat in val_patterns):
             orientation['has_concrete_value_prop'] = True

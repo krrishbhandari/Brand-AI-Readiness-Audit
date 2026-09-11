@@ -24,8 +24,8 @@ METRIC_PATTERNS = [
     r'\b\d+(?:\.\d+)?%',                          # Percentages: 99.9%, 15%
     r'[\$€£₹¥]\s*\d+(?:,\d{3})*(?:\.\d{2})?',     # Currencies: $99, ₹1,499, €49.90
     r'\b\d+(?:,\d{3})*(?:\.\d+)?\s*(?:USD|EUR|GBP|INR|CAD|AUD)\b', # Explicit currencies
-    r'\b\d+(?:\.\d+)?\s*(?:ms|sec|min|hours?|days?|weeks?|months?|years?)\b', # Time
-    r'\b\d+(?:\.\d+)?\s*(?:GB|TB|MB|KB|kbps|Mbps|Gbps|GHz|MHz)\b',          # Tech specs
+    r'\b\d+(?:\.\d+)?\s*(?:ms|sec|secs?|seconds?|mins?|minutes?|hours?|days?|weeks?|months?|years?)\b', # Time
+    r'\b\d+(?:\.\d+)?\s*(?:GB|TB|MB|KB|kbps|Mbps|Gbps|GHz|MHz|qubits?|mK|K)\b', # Tech specs
     r'\b\d+(?:\.\d+)?\s*(?:x|times|fold|k|m|million|billion)\b',              # Multipliers/counts
     r'\b\d{1,3}(?:,\d{3})+\b'                     # Formatted integers: 10,000, 1,000,000
 ]

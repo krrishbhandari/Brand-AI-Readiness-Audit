@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrandAIReadinessAuditReport",
+  "description": "Standardized output schema for the Brand AI-Readiness Audit Marketplace entrypoint",
+  "type": "object",
+  "required": ["site", "audited_at", "summary", "findings"],
+  "properties": {
+    "site": {
+      "type": "string",
+      "description": "Target website domain or host (e.g., example.com)"
+    },
+    "audited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of when the audit was executed"
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_findings", "critical", "high", "medium"],
+      "properties": {
+        "total_findings": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of findings detected across all skills"
+        },
+        "critical": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of critical severity findings"
+        },
+        "high": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of high severity findings"
+        },
+        "medium": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of medium severity findings"
+        },
+        "low": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of low severity findings"
+        },
+        "info": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of informational findings"
+        },
+        "ai_readiness_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Overall composite readiness score (0-100)"
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "severity", "evidence", "suggested_action"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique deterministic identifier for the finding (e.g., DISC-001, KNOW-002)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Concise human-readable title of the problem or proactive opportunity"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low", "info"],
+            "description": "Severity classification"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Empirical evidence with quantitative details and crawl data"
+          },
+          "category": {
+            "type": "string",
+            "description": "Audit category (e.g., crawlability, structured_data, orientation, citation)"
+          },
+          "skill": {
+            "type": "string",
+            "description": "Identifier of the skill that produced this finding"
+          },
+          "location": {
+            "type": "string",
+            "description": "URL or DOM element path where issue was found"
+          },
+          "suggested_action": {
+            "type": "object",
+            "required": ["summary", "priority"],
+            "properties": {
+              "summary": {
+                "type": "string",
+                "description": "Clear, actionable, mechanism-sound instruction on how to fix or improve"
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"],
+                "description": "Implementation priority for this action"
+              },
+              "code_snippet": {
+                "type": "string",
+                "description": "Optional drop-in JSON-LD, robots.txt, or HTML snippet to resolve the issue"
+              },
+              "mechanism": {
+                "type": "string",
+                "description": "Technical explanation of why this fix restores AI discoverability or engagement"
+              }
+            }
+          }
+        }
+      }
+    },
+    "proactive_recommendations": {
+      "type": "array",
+      "description": "Strategic beyond-problem improvements to maximize AI brand authority",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "summary", "priority"],
+        "properties": {
+          "id": {"type": "string"},
+          "title": {"type": "string"},
+          "summary": {"type": "string"},
+          "priority": {"type": "string"},
+          "impact": {"type": "string"}
+        }
+      }
+    }
+  }
+}

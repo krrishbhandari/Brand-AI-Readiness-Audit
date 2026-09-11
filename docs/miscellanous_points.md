@@ -1,0 +1,32 @@
+This is genuinely solid material — you (or your team) already did a lot of the strategic thinking for Day 1-2 of the roadmap. Here's the honest breakdown: what's real signal, what's marketing-grade material worth double-checking, and what's actually still missing.
+
+## What each document gives you
+
+*Doc 30 (Adobe ecosystem)* — Confirms and extends what I found earlier: Adobe LLM Optimizer's prompt-sampling engine, edge-CDN auto-fix, plus AEM's Content Advisor Agent and Adobe Commerce GEO. Useful context, but note it is mostly marketing/case-study framing — I'd treat the "350% citation increase" and "4.4x conversion lift" figures as unverifiable claims you shouldn't cite as fact in your submission, not as numbers you can rely on.
+
+*Doc 31 (competitive landscape across 7 tool categories)* — This is the most strategically valuable piece. It sharpens the differentiation argument into something concrete: every existing category is strong at one half of the problem and weak at the other, or strong at detection but weak at explaining mechanism:
+- SEO tools: evidence-backed, but zero LLM-rendering or RAG-mechanism awareness
+- GEO tools (ZipTie, Frase): explain mechanism well, but no off-site corroboration or crawler-blocking checks
+- AI visibility platforms (Profound, MaxAEO): show where you're invisible, never why — weakest evidence, no root-cause
+- Website audit agents: strong technical evidence, zero mechanism explanation
+- UX tools: strong behavioral evidence, no AI-readability angle at all
+
+The synthesized white space — *root-cause-linked, dual-sided, mechanism-explained, evidence-backed auditing in one pass* — is a genuinely defensible positioning, and it lines up with the rubric's actual scoring criteria (evidence + mechanism-sound fixes + covering both halves). Keep this framing in your README's opening paragraph; it's a strong way to signal to graders that you understood the assignment, not just executed it.
+
+*Doc 32 (failure matrix → skill mapping)* — This is essentially your Day 1/2 deliverable already drafted: failure pattern → evidence signal → impact → skill assignment, consolidated into 4 skills (orchestrator + crawl-render-audit + freshness-corroboration + engagement-audit). That's a clean, non-padded decomposition — better than forcing a 5th "citation-readiness" skill, since entity ambiguity and corroboration genuinely belong with freshness. The specific thresholds (DOM diff >40%, fluff-to-fact ratio >3:1, staleness >18 months) are good starting hypotheses, but they're AI-generated numbers with no grounding in anything you've actually measured — don't treat them as validated. You'll want to sanity-check a few of these against real pages before locking them into references/.
+
+*Doc 33 (21-site field research matrix)* — Here's where I'd push back a bit. Read it carefully: the "Strong/Weak" sites (Investopedia, Zapier, Wirecutter, GitHub Docs, Healthline, Mayo Clinic, Stripe Docs, HubSpot, G2, Wikipedia, Coursera, NPS) are real, plausible companies where the AI's general claims are probably in the right direction — but the "Misrepresented" and several "Weak" entries ("Local Boutique Hotel," "Legacy B2B ERP Co.," "Fintech Startup X," "MedTech Device Co.," "Regional Bank Y," "D2C Supplement Co.," "SaaS Analytics Startup," "Substack Blog Z") are archetypes, not named real sites — no team could have actually browsed a company called "Fintech Startup X." That's a strong signal this table is the AI *synthesizing plausible failure patterns, not reporting genuine field research. It's an excellent *hypothesis generator — the failure-pattern taxonomy (crawler blockade → misrepresentation, entity collision → confusion, facts-in-images → invisibility) is exactly the shape your matrix should take. But the hackathon explicitly says "go find real websites... we won't ask which sites you studied" — meaning generalization is tested by whether your checks work on sites you've never described to anyone, which requires that your rules came from real, verifiable observation, not from an AI's plausible-sounding invention. If a grader's unseen test site doesn't match the AI's guessed pattern, a rule built on a fabricated example is exactly the kind of overfit-to-fiction that would fail generalization.
+
+## What you actually still need to do
+
+You don't need more competitive-landscape or Adobe-product research — that's now diminishing returns. What's missing is the one thing no AI output can substitute for:
+
+1. *Real verification pass.* Pick 8-10 sites from your own actual browsing (mix a few of the named real ones above with a few you find yourself in weaker categories — small local businesses, a smaller SaaS tool, a regional bank, an e-commerce store you actually shop at). For each: literally open view-source, check robots.txt, search for application/ld+json in devtools, check whether a key fact is in plain text or an image. This turns Doc 32's hypothesized signals into ones you can defend if asked "how do you know this check matters?"
+
+2. *Calibrate the thresholds you're inheriting.* For 5-6 real pages, actually measure the raw-HTML-vs-rendered-DOM text diff percentage, actual word-count-before-first-fact, actual date staleness distribution. Adjust Doc 32's guessed numbers (40%, 3:1, 18 months) to match something you've observed, or at least confirm they're in a sane range.
+
+3. *Decide the entity-ambiguity check's real scope now, before building.* Doc 32/33 both flag this as valuable but only "partial"ly detectable — genuine brand-collision detection needs live web search, which is expensive and non-deterministic. Scope it down early: e.g., your deterministic check is just "does JSON-LD include a sameAs array pointing to Wikidata/Crunchbase/LinkedIn" (a clean pass/fail), and reserve true collision detection as a stretch goal or a narrowly-scoped LLM call, not a core script.
+
+4. *Timebox a Playwright test now.* Since JS-render diffing is central to your top-severity check, run it against 3-4 real sites today and time it — this determines whether your 5-minute runtime budget survives contact with reality, and it's cheap to find out now versus on Day 4.
+
+Everything else — the marketplace architecture, the 4-skill decomposition, the schema, the white-space positioning — is ready to move into SKILL.md drafting. I'd spend the rest of today closing the verification gap above, then proceed straight into Day 2 of the roadmap.
